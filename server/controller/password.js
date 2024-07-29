@@ -12,13 +12,13 @@ async function checkPassword(req, res){
             return res.status(400).json({
                 message : "Invalid Cardentials",
                 error : true
-            })
+            });
         }
         const tokenData = {
             id : user._id,
             email : user.email
         }
-        const token = await jwt.sign(tokenData, proccess.env.JWT_SECREAT_KEY, { expiresIn : '1d' });
+        const token = await jwt.sign(tokenData, process.env.JWT_SECREAT_KEY, { expiresIn : '1d' });
 
         const cookiesOption = {
             http : true,
@@ -27,8 +27,8 @@ async function checkPassword(req, res){
 
         return res.cookie('token', token, cookiesOption).status(200).json({
             message : 'Login Successfully',
-            data : user,
-            success : true,
+            token : token,
+            success : true, 
         })
 
         
