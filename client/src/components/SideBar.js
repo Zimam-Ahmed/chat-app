@@ -14,7 +14,7 @@ const SideBar = () => {
    
     const [editUserOpen, setEditUserOpen] = useState(false)
     const [allUser, setAllUser] = useState([])
-    const [openSearchUser, setOpenSearchUser] = useState(true)
+    const [openSearchUser, setOpenSearchUser] = useState(false)
   return (
     <div className='h-full w-full grid grid-cols-[48px,1fr] bg-white'>
         <div className='bg-slate-100 w-12 h-full rounded-tr-lg rounded-br-lg py-5 flex flex-col justify-between'>
