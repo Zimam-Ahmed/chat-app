@@ -4,6 +4,8 @@ const http  = require('http');
 const  getUserDetailsFromToken  = require('../helpers/getUserDeatilsFromToken');
 const UserModel = require('../models/UserModel');
 const app = express()
+const { ConversationModel } = require('../models/conversationModel');
+const { MessageModel } = require('../models/conversationModel');
 
 // socket connections
 const server = http.createServer(app)
@@ -43,6 +45,48 @@ io.on('connection', async(socket)=>{
         }
         socket.emit('message-user', payload)        
     })
+    
+    //new message
+    socket.on('new-message', async(data)=>{
+        console.log('new message', data)
+        // check conversation is available for both user
+        let conversation = await ConversationModel.findOne({
+            "$or" : [
+                {sender : data?.sender , receiver : data?.receiver},
+                {sender : data?.receiver , receiver : data?.sender },
+            ]
+        })
+        //if conversation is not available then create a new one 
+
+        if(!conversation){
+            const createConversation = await ConversationModel({
+                sender : data?.sender,
+                receiver : data?.receiver
+            })
+            conversation = await createConversation.save()
+        }
+
+        const message = new MessageModel({
+            text : data.text,
+            imageUrl : data.imageUrl,
+            videoUrl : data.videoUrl,
+        })
+        const saveMessage = await message.save()
+
+        const updateConversation = await ConversationModel.updateOne({ _id : conversation?._id }, {
+            "$push" : { messages : saveMessage?._id }
+        })
+
+        const getConversation = await ConversationModel.findOne({
+            "$or" : [
+                {sender : data?.sender , receiver : data?.receiver},
+                {sender : data?.receiver , receiver : data?.sender },
+            ]
+        }).populate('messages').sort({ updateAt : -1 })
+    })
+  
+    
+
     //disconnect
     socket.on('disconnect', ()=>{
         onlineUser.delete(user?._id)
