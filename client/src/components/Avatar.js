@@ -1,48 +1,57 @@
-import React from 'react';
-import { FaRegCircleUser } from "react-icons/fa6";
+import React, { useMemo } from 'react';
+import { FaRegCircleUser } from 'react-icons/fa6';
+import { useSelector } from 'react-redux';
 
-const Avatar = ({userId,name, imageUrl, width, height}) => {
-  let avatarName = ''
-  if(name){
-    const splitName = name?.split(" ")
-    if(splitName.length > 1){
-        avatarName = splitName[0][0]+splitName[1][0]
-    }else{
-        avatarName = splitName[0][0]
-    }
+const Avatar = ({ userId, name, imageUrl, width = 50, height = 50 }) => {
+  const onlineUser = useSelector((state) => state?.user?.onlineUser);
+    console.log("userId in avatar", userId)
+  // Generate avatar initials
+  let avatarName = '';
+  if (name) {
+    const splitName = name.split(' ');
+    avatarName = splitName.length > 1 
+      ? splitName[0][0] + splitName[1][0] 
+      : splitName[0][0];
   }
 
-  const bgColor = [
-    'bg-slate-200',
-    'bg-teal-200',
-    'bg-red-200',
-    'bg-green-200',
-    'bg-yellow-200',
-  ]
-  const randomNumber = Math.floor(Math.random() * 5)
-    return (
-    <div className={`text-slate-800 overflow-hiden rounded-full shadow font-bold `} style={{width: width+"px", height: height+"px" }}>
-        {
-            imageUrl ? (
-                <img 
-                    src={imageUrl}
-                    width={width}
-                    height={height}
-                    alt={name}
-                    className='rounded-full w-13 h-13'
-                />
-            ) : (
-                name ? (
-                    <div style={{width: width+"px", height: height+"px" }} className={`overflow-hidden rounded-full flex justify-center items-center text-lg ${bgColor[randomNumber]}`}>
-                        {avatarName}
-                    </div>
-                ) : (
-                    <FaRegCircleUser size={width} color='#00acb4'/>
-                )
-            )
-        }
-    </div>
-  )
-}
+  // Define background color options and memoize a random selection
+  const bgColor = ['bg-slate-200', 'bg-teal-200', 'bg-red-200', 'bg-green-200', 'bg-yellow-200'];
+  const randomBgColor = useMemo(() => bgColor[Math.floor(Math.random() * bgColor.length)], []);
 
-export default Avatar
+  // Check if the user is online
+  const isOnline = onlineUser.includes(userId);
+
+  return (
+    <div
+      className={`relative flex items-center justify-center ${randomBgColor} rounded-full shadow`}
+      style={{ width: `${width}px`, height: `${height}px` }}
+    >
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={name}
+          className="rounded-full object-cover"
+          style={{ width: '100%', height: '100%' }}
+        />
+      ) : name ? (
+        <div
+          className={`flex justify-center items-center text-lg text-slate-800 font-bold`}
+          style={{ width: '100%', height: '100%' }}
+        >
+          {avatarName}
+        </div>
+      ) : (
+        <FaRegCircleUser size={width} color="#00acb4" />
+      )}
+
+      {/* Online Status Indicator */}
+      {isOnline && (
+        <div
+          className="bg-green-500 w-3 h-3 absolute bottom-1 right-1 z-10 rounded-full border-2 border-white"
+        ></div>
+      )}
+    </div>
+  );
+};
+
+export default Avatar;

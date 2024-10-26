@@ -33,7 +33,7 @@ const SideBar = () => {
            <div>
                 <button onClick={() => setEditUserOpen(true)} title = {user?.name} className='w-12 h-12 flex justify-center items-center curser-pointer hover:bg-slate-200 rounded'>
                
-                    <Avatar width={30} height={30}  name={user?.name}  imageUrl={user?.profile_pic}/>
+                    <Avatar width={40} height={40}  name={user?.name}  imageUrl={user?.profile_pic} userId={user?._id}/>
                </button>
                <button title = 'logout' className='w-12 h-12 flex justify-center items-center curser-pointer hover:bg-slate-200 rounded -ml-1'>
                     <BiLogOut size={25}/>

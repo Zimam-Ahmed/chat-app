@@ -1,10 +1,12 @@
 import axios from 'axios'
 import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { logout, setUser } from '../redux/userSlice';
+import { logout, setOnlineUser, setSocketConnection, setUser } from '../redux/userSlice';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import SideBar from '../components/SideBar';
 import logo from '../assets/logo.png';
+import io from 'socket.io-client'
+
 
 const Home = () => {
   const dispatch = useDispatch()
@@ -30,6 +32,24 @@ const Home = () => {
   useEffect(()=>{
     fetchUserDetails();
   })
+  
+  // socket connection
+
+  useEffect(()=>{
+    const socketConnection = io(process.env.REACT_APP_BACKEND_URL, {
+      auth: {
+        token: localStorage.getItem('token')
+      }
+    })
+    socketConnection.on('onlineUser', (data)=>{
+      console.log('home page data: ',data)
+      dispatch(setOnlineUser(data))
+    })
+    dispatch(setSocketConnection(socketConnection))
+    return ()=>{
+      socketConnection.disconnect()
+    }
+  },[])
   const basePath = location.pathname ==='/'
   return (
     <div className='grid lg:grid-cols-[300px,1fr] h-screen'>
