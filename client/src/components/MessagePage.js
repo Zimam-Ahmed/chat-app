@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { Link, useParams } from 'react-router-dom'
 import Avatar from './Avatar'
@@ -12,10 +12,10 @@ import { IoMdClose } from "react-icons/io";
 import Loading from './Loading';
 import backgroundImage from '../assets/wallapaper.jpeg'
 import { IoSend } from "react-icons/io5";
+import moment from 'moment'
 
 const MessagePage = () => {
   const params = useParams()
-  console.log('userId',params.userId)
   const socketConnection = useSelector(state => state?.user?.socketConnection)
   const user = useSelector(state => state?.user)
   const [dataUser, setDataUser] = useState({
@@ -25,9 +25,15 @@ const MessagePage = () => {
     profile_pic: "",
     online : false
   })
-  
+  const [allMessages, setAllMessages] = useState([])
   const [openImageVideo, setOpenImageVideo] = useState(false)
   const [loading, setLoading] = useState(false)
+  const currentMessage = useRef(null)
+  useEffect(()=>{
+    if(currentMessage.current){
+      currentMessage.current.scrollIntoView({ behavior : 'smooth', block : 'end' })
+    }
+  },[allMessages])
   const [message, setMessage] = useState({
     text: "",
     imageUrl: "",
@@ -86,8 +92,11 @@ const MessagePage = () => {
     if(socketConnection){
       socketConnection.emit('message-page',params.userId)
       socketConnection.on('message-user', (data)=>{
-        console.log('user_data', data)
+       
         setDataUser(data)
+      })
+      socketConnection.on('message', (data)=>{
+        setAllMessages(data)
       })
     }
   },[socketConnection, params?.userId, user])
@@ -110,7 +119,13 @@ const MessagePage = () => {
           receiver : params?.userId,
           text : message.text,
           imageUrl : message.imageUrl,
-          videoUrl : message.videoUrl
+          videoUrl : message.videoUrl,
+          msgByUserId : user?._id
+        })
+        setMessage({
+            text: "",
+            imageUrl: "",
+            videoUrl: ""
         })
       }
     }
@@ -141,9 +156,45 @@ const MessagePage = () => {
       
       {/* All messages */}
       <section className='h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative bg-slate-200 bg-opacity-30'>
+      {/* All Message Show Here */}
+      <div className='flex flex-col mx-2' ref={currentMessage} >
+        {
+          allMessages.map((msg, index)=>{
+            return(
+              <div className={`bg-white p-1 py-1 my-2 rounded w-fit max-w-[230px] md:max-w-sm lg:max-w-md ${user._id == msg.msgByUserId ? "ml-auto" : ""}`}>
+              <div className='w-full'>
+                  {                    
+                    msg.imageUrl && (
+                          <img
+                            src={msg.imageUrl}
+                            className='w-full h-full object-scale-down'
+                          />
+                      )
+                    
+                  }
+                </div>
+                <div className='w-full'>
+                  {                    
+                    msg.videoUrl && (
+                          <video
+                            src={msg.videoUrl}
+                            className='w-full h-full object-scale-down'
+                            controls
+                          />
+                      )
+                    
+                  }
+                </div>
+                <p className='px-2'>{msg.text}</p>
+                <p className='text-xs ml-auto w-fit'>{moment(msg.createdAt).format('hh:mm')}</p>
+              </div>
+            )
+          })
+        }
+      </div>
       {
         message.imageUrl && (
-          <div className='w-full h-full bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden'>
+          <div className='w-full h-full sticky bottom-0 bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden'>
            <div onClick={handleClearUploadImage} className='w-fit p-2 absolute top-0 -right-0 cursor-pointer hover:text-red-600'>
               <IoMdClose 
                 size={35}
@@ -166,7 +217,7 @@ const MessagePage = () => {
 
       {
         message.videoUrl && (
-          <div className='w-full h-full bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden'>
+          <div className='w-full h-full sticky bottom-0 bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden'>
            <div onClick={handleClearUploadVideo} className='w-fit p-2 absolute top-0 -right-0 cursor-pointer hover:text-red-600'>
               <IoMdClose 
                 size={35}
@@ -187,11 +238,13 @@ const MessagePage = () => {
       }
       {
         loading && (
-          <div className='w-full h-full flex justify-center items-center'>
+          <div className='w-full h-full sticky bottom-0 flex justify-center items-center'>
            <Loading/>
           </div>
         )
       }
+
+      
       </section>
       
       {/* send message */}

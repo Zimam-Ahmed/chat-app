@@ -43,9 +43,20 @@ io.on('connection', async(socket)=>{
             profile_pic : userDetails?.profile_pic,
             online : onlineUser.has(userId),
         }
-        socket.emit('message-user', payload)        
+        socket.emit('message-user', payload)  
+        
+        //get previous messages
+        const getConversation = await ConversationModel.findOne({
+            "$or" : [
+                {sender : user?._id , receiver :userId},
+                {sender : userId , receiver : user?._id },
+            ]
+        }).populate('messages').sort({ updateAt : -1 })
+
+        socket.emit('message', getConversation.messages )
+
     })
-    
+
     //new message
     socket.on('new-message', async(data)=>{
         console.log('new message', data)
@@ -70,6 +81,7 @@ io.on('connection', async(socket)=>{
             text : data.text,
             imageUrl : data.imageUrl,
             videoUrl : data.videoUrl,
+            msgByUserId : data.msgByUserId
         })
         const saveMessage = await message.save()
 
@@ -77,12 +89,7 @@ io.on('connection', async(socket)=>{
             "$push" : { messages : saveMessage?._id }
         })
 
-        const getConversation = await ConversationModel.findOne({
-            "$or" : [
-                {sender : data?.sender , receiver : data?.receiver},
-                {sender : data?.receiver , receiver : data?.sender },
-            ]
-        }).populate('messages').sort({ updateAt : -1 })
+      
     })
   
     
